@@ -88,4 +88,4 @@ This bi-directional exchange ensures that even if Node A is behind, it catches u
 The `FailureDetector` checks todos every 5 seconds. Any node that hasn't been "seen" (updated heartbeat) for more than 10 seconds is marked as `alive: false`. Nodes marked as dead are still gossiped about but are contacted less frequently.
 
 ## 📄 License
-ISC
+APACHE 2.0
