@@ -1,0 +1,21 @@
+{
+  "name": "gossip",
+  "rank": "av",
+  "request": {
+    "type": "http",
+    "url": "localhost:8005/gossip",
+    "scripts": {
+      "preRequest": "",
+      "postResponse": ""
+    },
+    "method": "POST",
+    "queryParams": [],
+    "headers": [],
+    "body": "",
+    "contentType": "text/plain",
+    "auth": {
+      "currentAuthType": "INHERIT",
+      "authConfigStore": {}
+    }
+  }
+}

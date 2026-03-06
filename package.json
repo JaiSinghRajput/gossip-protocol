@@ -1,0 +1,32 @@
+{
+  "name": "gossip-server",
+  "version": "1.0.0",
+  "description": "",
+  "main": "dist/server.js",
+  "type": "module",
+  "scripts": {
+    "build": "tsc",
+    "start": "node dist/server.js",
+    "dev": "node --loader ts-node/esm src/server.ts"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "packageManager": "pnpm@10.27.0",
+  "DevDependencies": {
+    "@types/node": "^18.16.18",
+    "ts-node": "^10.9.1",
+    "typescript": "^5.0.4"
+  },
+  "devDependencies": {
+    "@types/express": "^5.0.6",
+    "@types/node": "^25.2.3",
+    "ts-node": "^10.9.2",
+    "typescript": "^5.9.3"
+  },
+  "dependencies": {
+    "axios": "^1.13.5",
+    "express": "^5.2.1",
+    "uuid": "^13.0.0"
+  }
+}

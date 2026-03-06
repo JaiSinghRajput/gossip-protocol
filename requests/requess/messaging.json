@@ -1,0 +1,21 @@
+{
+  "name": "messaging",
+  "rank": "auntit17728065997071",
+  "request": {
+    "type": "http",
+    "url": "localhost:8000/message",
+    "scripts": {
+      "preRequest": "",
+      "postResponse": ""
+    },
+    "method": "POST",
+    "queryParams": [],
+    "headers": [],
+    "body": "",
+    "contentType": "text/plain",
+    "auth": {
+      "currentAuthType": "INHERIT",
+      "authConfigStore": {}
+    }
+  }
+}
