@@ -2,9 +2,15 @@ import axios from 'axios';
 import { v4 as uuid } from 'uuid';
 import type { MembershipService } from './membership.js';
 import type { Peer } from '../types/peer.js';
+import type { GossipMessage } from '../types/message.js';
+
+type GossipState = {
+    peers: Peer[];
+    messages: GossipMessage[];
+};
 
 export class GossipService {
-    private store = new Map<string, any>();
+    private store = new Map<string, GossipMessage>();
 
     constructor(
         private membership: MembershipService,
@@ -17,8 +23,15 @@ export class GossipService {
         return peers[Math.floor(Math.random() * peers.length)] ?? null;
     }
 
+    private buildState(): GossipState {
+        return {
+            peers: this.membership.getPeers(undefined, false),
+            messages: Array.from(this.store.values())
+        };
+    }
 
-    create(payload: any) {
+
+    create(payload: unknown) {
         const id = uuid();
         this.store.set(id, { id, payload, version: 1 });
     }
@@ -37,12 +50,10 @@ export class GossipService {
         if (!randomPeer) return;
 
         try {
+            const payload = this.buildState();
             const response = await axios.post(
                 `http://${randomPeer.host}:${randomPeer.port}/gossip`,
-                {
-                    peers: this.membership.getPeers(undefined, false), // Send ALIVE AND DEAD peers
-                    messages: Array.from(this.store.values())
-                }
+                payload
             );
 
             // Double gossip (Pull merge)
@@ -54,57 +65,53 @@ export class GossipService {
         }
     }
 
-    private handleIncoming(peers: Peer[], messages: any[]) {
+    private handleIncoming(peers: Peer[] = [], messages: GossipMessage[] = []) {
         // Update membership info
-        if (peers && Array.isArray(peers)) {
-            peers.forEach(peer => {
-                if (peer && peer.id && peer.id !== this.selfId) {
-                    this.membership.addOrUpdate(peer);
-                }
-            });
-        }
+        peers.forEach(peer => {
+            if (peer && peer.id && peer.id !== this.selfId) {
+                this.membership.addOrUpdate(peer);
+            }
+        });
 
         // Update application messages
-        if (messages && Array.isArray(messages)) {
-            messages.forEach(msg => {
-                if (msg && msg.id) {
-                    const existing = this.store.get(msg.id);
-                    if (!existing || msg.version > existing.version) {
-                        this.store.set(msg.id, msg);
-                    }
+        messages.forEach(msg => {
+            if (msg && msg.id) {
+                const existing = this.store.get(msg.id);
+                if (!existing || msg.version > existing.version) {
+                    this.store.set(msg.id, msg);
                 }
-            });
-        }
+            }
+        });
     }
 
-    private getState() {
-        return {
-            peers: this.membership.getPeers(undefined, false),
-            messages: Array.from(this.store.values())
-        };
-    }
-
-    receive(data: any) {
+    receive(data: unknown): GossipState {
         try {
-            if (!data) return this.getState();
+            if (!data) return this.buildState();
 
             console.log(`📥 Received gossip: ${Array.isArray(data) ? 'Array' : typeof data}`);
 
             if (Array.isArray(data)) {
                 // Old format: [msg1, msg2]
-                this.handleIncoming([], data);
-            } else if (data.messages && !data.peers) {
+                this.handleIncoming([], data as GossipMessage[]);
+            } else if (
+                typeof data === 'object' &&
+                data !== null &&
+                'messages' in data &&
+                !('peers' in data)
+            ) {
                 // Transitional format: { messages: [] }
-                this.handleIncoming([], data.messages);
-            } else {
+                const transitionalData = data as { messages?: GossipMessage[] };
+                this.handleIncoming([], transitionalData.messages ?? []);
+            } else if (typeof data === 'object' && data !== null) {
                 // New format: { peers: [], messages: [] }
-                this.handleIncoming(data.peers, data.messages);
+                const state = data as Partial<GossipState>;
+                this.handleIncoming(state.peers ?? [], state.messages ?? []);
             }
         } catch (error) {
             console.error("❌ Error processing incoming gossip:", error);
         }
 
-        return this.getState();
+        return this.buildState();
     }
 
     async bootstrap() {
@@ -112,12 +119,10 @@ export class GossipService {
         const peers = this.membership.getPeers(this.selfId);
         for (const peer of peers) {
             try {
+                const payload = this.buildState();
                 const response = await axios.post(
                     `http://${peer.host}:${peer.port}/gossip`,
-                    {
-                        peers: this.membership.getPeers(undefined, false),
-                        messages: Array.from(this.store.values())
-                    }
+                    payload
                 );
                 if (response.data) {
                     this.handleIncoming(response.data.peers, response.data.messages);

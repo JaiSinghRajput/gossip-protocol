@@ -4,12 +4,13 @@ export class MembershipService {
   private peers = new Map<string, Peer>();
 
   addOrUpdate(peer: Peer) {
+    const now = Date.now();
     const existing = this.peers.get(peer.id);
 
     if (!existing || (peer.heartbeat > existing.heartbeat)) {
       this.peers.set(peer.id, {
         ...peer,
-        lastSeen: Date.now(),
+        lastSeen: now,
         alive: true
       });
       return true;
@@ -17,7 +18,7 @@ export class MembershipService {
     return false;
   }
 
-  getPeers(excludeId?: string, onlyAlive: boolean = true) {
+  getPeers(excludeId?: string, onlyAlive = true): Peer[] {
     return Array.from(this.peers.values()).filter(p => {
       const isAlive = onlyAlive ? p.alive : true;
       const isNotSelf = !excludeId || p.id !== excludeId;
@@ -33,10 +34,11 @@ export class MembershipService {
   }
 
   incrementHeartbeat(id: string) {
+    const now = Date.now();
     const peer = this.peers.get(id);
     if (peer) {
       peer.heartbeat++;
-      peer.lastSeen = Date.now();
+      peer.lastSeen = now;
       peer.alive = true;
     }
   }
