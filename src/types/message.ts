@@ -1,5 +1,5 @@
 export type GossipMessage = {
   id: string;
-  payload: any;
+  payload: unknown;
   version: number;
 };

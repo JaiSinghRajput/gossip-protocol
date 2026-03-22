@@ -5,10 +5,11 @@ export class FailureDetector {
 
   start() {
     setInterval(() => {
+      const now = Date.now();
       const peers = this.membership.getPeers();
 
       peers.forEach(peer => {
-        if (Date.now() - peer.lastSeen > 10000) {
+        if (now - peer.lastSeen > 10000) {
           this.membership.markDead(peer.id);
         }
       });
